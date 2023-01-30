@@ -1,0 +1,111 @@
+version: '3'
+
+services:
+  redis-server:
+    image: 'redis'
+
+  node-app:
+    build: .
+    ports:
+      - "4001:8081"
+
+
+#51. Docker Compose Files
+#Primero ponemos la versión.
+#services = containers. No es exactamente un container, es un tipo de Container. 
+#El primer servicio que vamos a crear es redis-server. 
+#La node-app service queremos que se cree a través del Dockerfile ubicado en este directorio.
+#Entonces, no vamos a estar especificando una imagen, sino un build property.
+#build: . -> significa mirar en el Current Directory por un Dockerfile para generar la imagen. 
+#El "-" en un YAML file es la forma de especificar un array. Entonces, técnicamente podremos mapear muchos ports diferentes a un único file de Docker Compose. 
+#Para un single service o un single container. 
+#En este caso queremos hacer el mapping de un único port. Sería el 4041 en nuestra local machine al 8081 en el Docker Container. 
+
+#In a docker-compose.yml, the section "services" refers to containers? Which kind of containers are services? Can you explain me?
+#Yes, the "services" section in a docker-compose.yml file refers to containers.
+#In the context of Docker Compose, a service is a named unit of work that encapsulates a container and its configuration
+#such as the image to use, ports to expose, environment variables, and volumes to mount.
+#Services are created by using the docker-compose up command and they are typically used to represent a single, 
+#scalable instance of a specific application component, such as a web server, database, or background worker.
+#Each service defined in the docker-compose.yml file creates a corresponding container when the services are started with docker-compose up
+#The containers can be started, stopped, and managed as a group, and they can also be linked to allow communication between the services.
+
+#Is the "-" used to represent an array in a YAML file? In this case, in the docker-compose.yml?
+#Yes, the "-" symbol is used to represent an array in a YAML file.
+#In a docker-compose.yml file, it is used to specify a list of values for a particular configuration option
+#such as environment variables, command arguments, or volumes.
+#For example, the following YAML fragment specifies a list of environment variables for a service:
+#services:
+#  my_service:
+#    environment:
+#      - VAR1=value1
+#      - VAR2=value2
+#      - VAR3=value3
+#In this example, the environment section specifies three environment variables, VAR1, VAR2, and VAR3, that will be passed to the container when it is started.
+#The - symbol is used to indicate that each line represents a separate element in the array.
+
+#52. Networking with Docker Compose
+#Recordar que queríamos usar Docker Compose dado que hace que el Networking, o la comunicación entre ambos containes, sencilla. 
+#No obstante, notar que al momento no hemos puesto configuraciones de networking. 
+#Pero, solo por definir estos dos servicios, automáticamente docker-compose va a crear los servicios y esencialmente la misma network. Los Containers van a tener
+#Acceso libre a comunicarse entre ellos de cualquier forma que les guste. 
+#Solo por usar docker-compose para crear los dos containers, los dos tendrán acceso libre a comunicación entre ellos. 
+#Podrán intercambiar tanta información como quieran, sin tener que abrir puertos entre ellos. 
+#Cuando creamos los dos servicios a través de Docker Compose, entonces, no tendremos que realizar port declaration como hicimos para la node-app.
+#La port declaration en la node-app es simplemente para abrir el acceso a nuestro Docker Container a través de nuestra local machine. 
+
+#53. Docker Compose Commands
+#docker run myimage === docker-compose up.
+#docker build . + docker run myimage === docker-compose up --build.
+#Recordemos que el propósito de docker-compose es hacer sencillo el uso de los comandos que generalmente usaríamos a través de docker run.
+
+#Con docker-compose up no especificamos una imagen dado que docker-compose mirará a nuestro cwd y automáticamente buscará a docker-compose.yml file adentro del cwd.
+#Recordemos que antes teníamos dos comandos diferentes para crear una imagen y runnearla -> docker build . + docker run myimage. Si queríamos re-buildear la imagen
+#Y luego instanciarla, teníamos los dos comandos de antes. 
+#En el Docker Compose, si queremos re-buildear las imágenes listadas en nuestro Docker Compose file. Ej: si queremos node-app y redis-server services re-built
+#Vamos a escribir docker-compose up --build. 
+
+#54. Stopping Docker Compose Containers
+#Docker Compose -> hace mucho más sencillo trabajar con múltiples containers al mismo tiempo.
+#Recordemos que antes habíamos hecho un docker run -d redis -> esto ejecuta el container en el background. 
+#Entonces podemos seguir ejecutando comandos in la terminal
+#Luego, podíamos ver todos los containers que estaban ejecutándose con docker ps.
+#Y luego podía stopear el container a través de docker stop <containerId>.
+#Con docker compose podemos startupear múltiples containers al mismo tiempo, y también stopearlos.
+#docker-compose up -d.
+#docker-compose down.
+#Lo bueno del dettached mode (-d) es que me permite seguir escribiendo comandos en la consola, dado que los logs no se muestran.
+#Una cosa importante, si hacemos docker ps veremos todos los containers individuales runneando.
+
+#What is docker-compose down? Can you explain the different options that can be run in that command? And the syntax for docker-compose down?
+#docker-compose down is a command used to stop and remove containers, networks, and volumes created by docker-compose up.
+#The syntax for the docker-compose down command is:
+#docker-compose down [OPTIONS]
+#The different options that can be used with docker-compose down are:
+#--volumes: Remove the volumes created by the docker-compose up command.
+#--rmi: Remove all the images used by the services defined in the docker-compose.yml file.
+#--remove-orphans: Remove containers that are not defined in the docker-compose.yml file.
+#-v, --volumes: Also remove volumes associated with the containers.
+#--help: Display the help for the command.
+#It's worth noting that by default docker-compose down will stop the containers and remove the networks created, but not the volumes.
+
+#Which is the difference of stopping and removing a container? When I remove a container, can I run it again without building the images again?
+#The main difference between stopping and removing a container is that stopping a container halts its processes, but retains its configuration and data. 
+#You can start the container again later and all its data will be preserved.
+#On the other hand, removing a container terminates the container and removes its configuration, data, and other resources.
+#You can't run a removed container again without building its image again, but you can use the docker start command to start a previously stopped container.
+#Note that if you remove the container's volumes, its data will be permanently deleted and won't be available when you start the container again.
+
+#docker-compose down removes the container? But how can I start them again without having to build again the images?
+#You can start the containers again using the docker-compose up command without having to build the images again if the images are present in your local Docker image cache.
+#The docker-compose down command removes the containers, networks, and volumes defined in your docker-compose.yml
+#file but the images will still be present in the local cache
+#When you run docker-compose up again, it will use the cached images to start the containers, without having to build them again.
+
+#55. Container Maintenance with Compose
+#Como lidiamos con Containers que crushean por algún motivo en particular?
+#Puede ser que estemos corriendo un Servidor dentro de un Container, y quizás ese servidor experimenta un error que hace que quede en hang out y crash.
+#Vamos a ver algunos métodos para mitigar ese comportamiento, y vamos a ver como restartear el container cuando el software que corre dentro del container
+#Tiene un error de algún tipo.
+
+
