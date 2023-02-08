@@ -5,6 +5,7 @@ services:
     image: 'redis'
 
   node-app:
+    restart: on-failure
     build: .
     ports:
       - "4001:8081"
@@ -107,5 +108,87 @@ services:
 #Puede ser que estemos corriendo un Servidor dentro de un Container, y quizás ese servidor experimenta un error que hace que quede en hang out y crash.
 #Vamos a ver algunos métodos para mitigar ese comportamiento, y vamos a ver como restartear el container cuando el software que corre dentro del container
 #Tiene un error de algún tipo.
+#Primero vamos a agregar código que haga crashear la App cada vez que alguien visite nuestra route app.
+
+#56. Automatic Container Restarts
+#El process.exit me permite terminar el NodeJS process. El exit code de 0 me permite indicar que terminamos el Node Process y que todo fue OK.
+#Códigos >0 significan que terminamos el proceso pero que algo fue mal.
+#Para restartear el Docker Container, vamos a especificar algo llamado "restart policiy" adentro de nuestro docker-compose.yml. 
+#Hay 4 diferentes restart policies: no -> nunca intentes restartear este "." (build context) si el Container se stopea o crashea
+#always -> si el container se stopea, por cualquier razón, siempre intentar restartearlo.
+#on-failure -> solo restartear si el container se interrumpe con un error code.
+#unless-stopped -> siempre restartear a menos que nosotros (los developers) stopeemos el container forzadamente.
+#Por default, en un container, siempre tenemos la "no" restart policy asignada a todos nuestros containers. 
+#visits-node-app-1      | 
+#visits-node-app-1      | > start
+#visits-node-app-1      | > node index.js
+#visits-node-app-1      | 
+#visits-node-app-1      | Listening on Port 8081
+#visits-node-app-1 exited with code 0
+#visits-node-app-1      | 
+#visits-node-app-1      | > start
+#visits-node-app-1      | > node index.js
+#visits-node-app-1      | 
+#visits-node-app-1      | Listening on Port 8081
+#visits-node-app-1 exited with code 0
+#visits-node-app-1      | 
+#visits-node-app-1      | > start
+#visits-node-app-1      | > node index.js
+#visits-node-app-1      | 
+#visits-node-app-1      | Listening on Port 8081
+#Ese es el output de cuando hago el get request a la home route de nuestro project. Notar que tenemos el exited with code 0, y automáticamente
+#Se restartea.
+#Una cosa interesante a notar es que tenemos múltiples listening on port 8081. Esto está bien.
+#Técnicamente, cuando stopeamos el container con process.exit, no estamos deleteando el container, o stopearlo o killing it.
+#Entonces como docker compose decide restartearlo, usamos el que ya estaba vigente.
+#En el caso que utilice el restart: on-failure, solo se considerarán códigos de 0 para re-startear el container. Entonces, al dejar el process.exit(0),
+#Veremos que el NodeJS process termina en éxito y el Container no se vuelve a restartear.
+#Si queremos hacer uso de la "no" restart policy, lo tenemos que poner específicamente entre "". 
+#La razón para esto es dado que en un YAML file, el valor de no (que aparece como naranja) es interpretado como no.
+#Entonces, "no" debe ser agregado entre comillas.
+
+  
+
+#What is the "restart policy" in a docker-compose.yml?
+#The "restart policy" in a docker-compose.yml file is a configuration setting that determines what happens when a container crashes or is stopped
+#The "restart policy" is set within the services section of the docker-compose.yml file and it can be set to one of the following values:
+#no: The container will not automatically restart when it crashes or is stopped.
+#on-failure: The container will restart only if it exits with a non-zero exit code.
+#always: The container will always restart, regardless of the exit code.
+#unless-stopped: The container will always restart unless it is manually stopped.
+#The restart policy is useful in ensuring the continuity of services running within the containers and helps in handling failures and unexpected stops.
+
+#Can you give the basics about YAML syntax?
+#YAML stands for "YAML Ain't Markup Language" and is a human-readable data serialization format.
+#YAML uses indentation to indicate nesting of elements and uses colons to indicate key-value pairs.
+#YAML supports various data types including scalar values (strings, numbers), arrays, and dictionaries (or associative arrays).
+#Scalar values are denoted by a string (quoted or unquoted), number, or boolean. For example:
+#string: "Hello World"
+#number: 42
+#boolean: true
+#Lists in YAML are denoted by a hyphen (-) and a space followed by a value. For example:
+#- apples
+#- bananas
+#- oranges
+#Dictionaries are denoted by a colon (:) followed by a value. For example:
+#name: John Doe
+#age: 32
+#You can nest dictionaries within dictionaries and lists within lists to represent complex data structures.
+#YAML also supports the use of anchor references to reference the same value in multiple places in the document.
+#Overall, YAML is a simple and concise data format that is easy to read and write. It's widely used in various applications, 
+#including configuration files and data exchange between different systems.
+
+#Which is the difference between stop and crash?
+#In the context of a Docker container, "stop" means that the container has been intentionally stopped by some means, such as through a command 
+#like docker stop or by a defined restart policy in a docker-compose.yml file.
+#On the other hand, a "crash" occurs when a container stops running unexpectedly due to an error or exception.
+#This can happen for a variety of reasons, such as a process within the container exceeding its memory limit, or encountering a bug or issue in the application code.
+#In summary, a "stop" is an intentional action, while a "crash" is an unintended and often unexpected termination of a container.
+
+#57. Container Status with Docker Compose
+#Si utilizo docker-compose ps voy a ver que tengo el status de mis dos containers (de la folder donde esté).
+#Cuando escribimos docker-compose ps, va a buscar específicamente el docker-compose.yml en el cwd. 
+
+
 
 

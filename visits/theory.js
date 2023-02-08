@@ -1249,6 +1249,5 @@
 
     
 
-    c. How can I establish a networking infraestructure between two Docker Containers using the Docker CLI? Can you show me the exact commands to do it?
-    e. How can I establish a networking infraestructure between two Docker Containers using Docker Compose?
+
 */
